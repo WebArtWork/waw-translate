@@ -1,0 +1,8 @@
+{
+	"name": "Translate",
+	"router": [{
+		"name": "Basic",
+		"src": "router.js"
+	}],
+	"dependencies": {}
+}
