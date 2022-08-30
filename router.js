@@ -1,69 +1,65 @@
-var Translates = require(__dirname+'/translate.js');
-var Word = require(__dirname+'/word.js');
+const Translates = require(__dirname + '/translate.js');
+const Word = require(__dirname + '/word.js');
 
-module.exports = function(sd) {
-	var router = sd.router('/api/translate');
-	router.get('/get', function(req, res){
-		Translates.find({}, function(err, docs){
-			res.json(docs);
-		})
+module.exports = async waw => {
+	const router = waw.router('/api/translate');
+
+	router.get('/get', waw.role('admin'), async (req, res) => {
+		// TODO make this management into files, each language different file
+		const translates = await Translates.find({});
+		const obj = {};
+		for (var i = 0; i < translates.length; i++) {
+			if (!obj[translates[i].lang]) obj[translates[i].lang] = {};
+			obj[translates[i].lang][translates[i].slug] = translates[i].translate;
+		}
+		res.json(obj);
 	});
-	router.get('/get_translates', function(req, res){
-		Translates.find({}, function(err, docs){
-			let obj = {};
-			for (var i = 0; i < docs.length; i++) {
-				if(!obj[docs[i].lang]) obj[docs[i].lang]={};
-				//if(!obj[docs[i].lang][docs[i].page]) obj[docs[i].lang][docs[i].page]={};
-				obj[docs[i].lang][docs[i].slug] = docs[i].translate;
-			}
-			res.json(obj);
-		})
-	});
-	router.post('/create', function(req, res){
-		Translates.findOne({
+
+	router.post('/create', waw.role('admin'), async (req, res) => {
+		const translate = await Translates.findOne({
 			slug: req.body.slug,
 			lang: req.body.lang
-		}, function(err, doc){
-			if(doc){
-				doc.translate = req.body.translate;
-				doc.save(function(){
-					res.json(true);
-				});
-			}else{
-				Translates.create(req.body, function(err, created){
-					res.json(true);
-				});
-			}
 		});
-	});	
-	router.post('/delete', function(req, res){
-		Translates.deleteOne({
-			_id: req.body._id
-		}, function(err){
-			res.json(true);
-		}); 
-	});
-	var routerWord = sd.router('/api/word');
-	routerWord.get('/get', function(req, res){
-		Word.find({}, function(err, docs){
-			res.json(docs||[]);
-		});
-	});
-	routerWord.post('/create', function(req, res){
-		Word.findOne({
-			slug: req.body.slug
-		}, function(err, doc){
-			if(doc) return res.json(false);
-			Word.create(req.body, function(err, created){
-				res.json(created);
+		if (translate) {
+			translate.translate = req.body.translate;
+			translate.save(function () {
+				res.json(true);
 			});
-		});
-	});
-	routerWord.post('/delete', function(req, res){
-		Word.deleteOne({
-			_id: req.body._id
-		}, function(err){
+		} else {
+			await Translates.create(req.body);
 			res.json(true);
+		}
+	});
+
+	router.post('/delete', waw.role('admin'), async (req, res) => {
+		await Translates.deleteMany({
+			slug: req.body.slug
 		});
+		res.json(true);
+	});
+
+	const routerWord = waw.router('/api/word');
+
+	routerWord.get('/get', waw.role('admin'), async (req, res) => {
+		const words = await Word.find({});
+		res.json(words || []);
+	});
+
+	routerWord.post('/create', waw.role('admin'), async (req, res) => {
+		const word = await Word.findOne({
+			slug: req.body.slug
+		});
+		if (word) {
+			res.json(false);
+		} else {
+			res.json(await Word.create(req.body));
+		}
+	});
+
+	routerWord.post('/delete', waw.role('admin'), async (req, res) => {
+		await Word.deleteOne({
+			_id: req.body._id
+		});
+		res.json(true);
 	});
 };
