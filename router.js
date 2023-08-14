@@ -1,8 +1,22 @@
-const Translates = require(__dirname + '/translate.js');
-const Word = require(__dirname + '/word.js');
 const geoip = require("geoip-lite");
-
 module.exports = async waw => {
+	const TranslateSchema = waw.mongoose.Schema({
+		translate: String,
+		slug: String,
+		lang: String
+	});
+
+	const Translates = waw.mongoose.model('Translate', TranslateSchema);
+
+	const WordSchema = waw.mongoose.Schema({
+		slug: String,
+		word: String,
+		page: String,
+		description: String
+	});
+
+	const Word = waw.mongoose.model('Word', WordSchema);
+
 	const routerTranslate = waw.router('/api/translate');
 
 	waw.translate = (req) => {
