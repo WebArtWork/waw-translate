@@ -1,65 +1,142 @@
 const Translates = require(__dirname + '/translate.js');
 const Word = require(__dirname + '/word.js');
+const geoip = require("geoip-lite");
 
 module.exports = async waw => {
-	const router = waw.router('/api/translate');
+	const routerTranslate = waw.router('/api/translate');
 
-	router.get('/get', waw.role('admin'), async (req, res) => {
-		// TODO make this management into files, each language different file
-		const translates = await Translates.find({});
+	waw.translate = (req) => {
+		return (obj)=>{}
+	};
+
+	waw.translates = async (lang) => {
+		const translates = await Translates.find({
+			lang
+		});
+
 		const obj = {};
+
+		for (var i = 0; i < translates.length; i++) {
+			obj[translates[i].slug] = translates[i].translate;
+		}
+
+		return obj;
+	}
+
+	const translates = {
+		ua: await waw.translates("ua")
+	}
+
+	waw.translate = (req) => {
+		let lang = 'en';
+		if (req.session.country) {
+			if (req.session.country === "ua") {
+				lang = 'ua';
+			}
+		} else {
+			const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+			const geo = geoip.lookup(ip);
+
+			if (geo && geo.country === "UA") {
+				lang = 'ua';
+			}
+		}
+
+		if (!translates[lang]) {
+			translates[lang] = {};
+		}
+
+		return (obj) => {
+			obj.translate = (slug) => {
+				const word = slug.split('.').slice(1).join('.');
+
+				if (typeof translates[lang][slug] !== 'string') {
+					waw.word(slug);
+				}
+
+				return lang ? translates[lang][slug] || word : word;
+			};
+		}
+	}
+
+	routerTranslate.get('/get', async (req, res) => {
+		const translates = await Translates.find({});
+
+		const obj = {};
+
 		for (var i = 0; i < translates.length; i++) {
 			if (!obj[translates[i].lang]) obj[translates[i].lang] = {};
+
 			obj[translates[i].lang][translates[i].slug] = translates[i].translate;
 		}
+
 		res.json(obj);
 	});
 
-	router.post('/create', waw.role('admin'), async (req, res) => {
+	routerTranslate.post('/create', waw.role('admin'), async (req, res) => {
 		const translate = await Translates.findOne({
 			slug: req.body.slug,
 			lang: req.body.lang
 		});
+
 		if (translate) {
 			translate.translate = req.body.translate;
+
 			translate.save(function () {
 				res.json(true);
 			});
 		} else {
 			await Translates.create(req.body);
+
 			res.json(true);
 		}
 	});
 
-	router.post('/delete', waw.role('admin'), async (req, res) => {
+	routerTranslate.post('/delete', waw.role('admin'), async (req, res) => {
 		await Translates.deleteMany({
 			slug: req.body.slug
 		});
+
 		res.json(true);
 	});
 
 	const routerWord = waw.router('/api/word');
 
-	routerWord.get('/get', waw.role('admin'), async (req, res) => {
+	routerWord.get('/get', async (req, res) => {
 		const words = await Word.find({});
+
 		res.json(words || []);
 	});
 
-	routerWord.post('/create', waw.role('admin'), async (req, res) => {
+	waw.word = async (slug) => {
 		const word = await Word.findOne({
-			slug: req.body.slug
+			slug
 		});
+
 		if (word) {
-			res.json(false);
+			return word;
 		} else {
-			res.json(await Word.create(req.body));
+			const arr = slug.split('.');
+			const page = arr.shift();
+			const word = arr.join('.');
+			return await Word.create({
+				slug,
+				word,
+				page
+			});
 		}
+	}
+
+	routerWord.post('/create', async (req, res) => {
+		res.json(waw.word(req.body.slug));
 	});
 
 	routerWord.post('/delete', waw.role('admin'), async (req, res) => {
 		await Word.deleteOne({
 			_id: req.body._id
 		});
+
 		res.json(true);
 	});
 };
