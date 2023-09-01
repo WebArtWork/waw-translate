@@ -97,9 +97,8 @@ module.exports = async waw => {
 		if (translate) {
 			translate.translate = req.body.translate;
 
-			translate.save(function () {
+			await translate.save() 
 				res.json(true);
-			});
 		} else {
 			await Translates.create(req.body);
 
@@ -143,7 +142,8 @@ module.exports = async waw => {
 	}
 
 	routerWord.post('/create', async (req, res) => {
-		res.json(waw.word(req.body.slug));
+		const word = await waw.word(req.body.slug)
+		res.json();
 	});
 
 	routerWord.post('/delete', waw.role('admin'), async (req, res) => {
