@@ -1,7 +1,6 @@
 {
 	"repo": "https://github.com/WebArtWork/waw-translate.git",
 	"name": "Translate",
-	"router": "router.js",
 	"dependencies": {
 		"geoip-lite": "*"
 	}
