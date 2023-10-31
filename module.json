@@ -2,6 +2,6 @@
 	"repo": "https://github.com/WebArtWork/waw-translate.git",
 	"name": "Translate",
 	"dependencies": {
-		"geoip-lite": "*"
+		"geoip-lite": "1.4.7"
 	}
 }
