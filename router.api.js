@@ -38,22 +38,25 @@ module.exports = async waw => {
 	}
 
 	const translates = {
-		ua: await waw.translates("ua")
+		uk: await waw.translates("uk"),
+		en: await waw.translates("en"),
+		fr: await waw.translates("fr")
 	}
 
+	routerTranslate.post('/set', (req, res)=>{
+		req.session.language = req.body.language;
+		res.json(true);
+	})
+
 	waw.translate = (req) => {
-		let lang = 'en';
-		if (req.session.country) {
-			if (req.session.country === "ua") {
-				lang = 'ua';
-			}
-		} else {
+		let lang = req.session.language ? req.session.language : 'en';
+		if (!req.session.language) {
 			const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
 			const geo = geoip.lookup(ip);
 
 			if (geo && geo.country === "UA") {
-				lang = 'ua';
+				lang = 'uk';
 			}
 		}
 
@@ -94,10 +97,12 @@ module.exports = async waw => {
 			lang: req.body.lang
 		});
 
+		translates[req.body.lang][req.body.slug] = req.body.translate;
+
 		if (translate) {
 			translate.translate = req.body.translate;
 
-			await translate.save() 
+			await translate.save()
 				res.json(true);
 		} else {
 			await Translates.create(req.body);
