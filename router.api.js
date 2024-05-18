@@ -37,11 +37,11 @@ module.exports = async (waw) => {
 		return obj;
 	};
 
-	const translates = {
-		uk: await waw.translates("uk"),
-		en: await waw.translates("en"),
-		fr: await waw.translates("fr"),
-	};
+	const translates = {};
+	waw.config.languages = waw.config.languages || ['en'];
+	for (const lang of waw.config.languages) {
+		waw.config.languages[lang] = await waw.translates(lang);
+	}
 
 	routerTranslate.post("/set", (req, res) => {
 		req.session.language = req.body.language;
