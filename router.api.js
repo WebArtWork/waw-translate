@@ -40,7 +40,7 @@ module.exports = async (waw) => {
 	const translates = {};
 	waw.config.languages = waw.config.languages || ['en'];
 	for (const lang of waw.config.languages) {
-		waw.config.languages[lang] = await waw.translates(lang);
+		translates[lang] = await waw.translates(lang);
 	}
 
 	routerTranslate.post("/set", (req, res) => {
