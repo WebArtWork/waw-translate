@@ -22,19 +22,21 @@ module.exports = async (waw) => {
 	const routerTranslate = waw.router("/api/translate");
 
 	waw.translate = (req) => {
-		return (obj) => { };
+		return (obj) => {};
 	};
 
 	waw.translates = async (lang, appId = "") => {
+		appId = appId.toLowerCase();
+
 		const translates = await Translates.find(
 			appId
 				? {
-					lang,
-					appId,
-				}
+						lang,
+						appId,
+				  }
 				: {
-					lang,
-				}
+						lang,
+				  }
 		);
 
 		const obj = {};
@@ -60,7 +62,8 @@ module.exports = async (waw) => {
 	waw.translate = (req) => {
 		let lang = req.session.language ? req.session.language : "en";
 		if (!req.session.language) {
-			const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+			const ip =
+				req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
 			const geo = geoip.lookup(ip);
 
@@ -87,6 +90,8 @@ module.exports = async (waw) => {
 	};
 
 	const get = async (req, res) => {
+		req.params.appId = req.params.appId.toLowerCase();
+
 		const translates = await Translates.find(
 			req.params.appId ? { appId: req.params.appId } : {}
 		);
@@ -96,7 +101,8 @@ module.exports = async (waw) => {
 		for (var i = 0; i < translates.length; i++) {
 			if (!obj[translates[i].lang]) obj[translates[i].lang] = {};
 
-			obj[translates[i].lang][translates[i].slug] = translates[i].translate;
+			obj[translates[i].lang][translates[i].slug] =
+				translates[i].translate;
 		}
 
 		res.json(obj);
@@ -105,17 +111,19 @@ module.exports = async (waw) => {
 	routerTranslate.get("/get/:appId", get);
 
 	routerTranslate.post("/create", async (req, res) => {
+		req.body.appId = req.body.appId.toLowerCase();
+
 		const translate = await Translates.findOne(
 			req.body.appId
 				? {
-					slug: req.body.slug,
-					lang: req.body.lang,
-					appId: req.body.appId,
-				}
+						slug: req.body.slug,
+						lang: req.body.lang,
+						appId: req.body.appId,
+				  }
 				: {
-					slug: req.body.slug,
-					lang: req.body.lang,
-				}
+						slug: req.body.slug,
+						lang: req.body.lang,
+				  }
 		);
 
 		translates[req.body.lang] = translates[req.body.lang] || {};
@@ -134,15 +142,17 @@ module.exports = async (waw) => {
 	});
 
 	routerTranslate.post("/delete", waw.role("admin"), async (req, res) => {
+		req.body.appId = req.body.appId.toLowerCase();
+
 		await Translates.deleteMany(
 			req.body.appId
 				? {
-					appId: req.body.appId,
-					slug: req.body.slug,
-				}
+						appId: req.body.appId,
+						slug: req.body.slug,
+				  }
 				: {
-					slug: req.body.slug,
-				}
+						slug: req.body.slug,
+				  }
 		);
 
 		res.json(true);
@@ -150,26 +160,30 @@ module.exports = async (waw) => {
 
 	const routerWord = waw.router("/api/word");
 
-	const getWord = async (req, res) => {
+	const getWords = async (req, res) => {
+		req.params.appId = req.params.appId.toLowerCase();
+
 		const words = await Word.find(
 			req.params.appId ? { appId: req.params.appId } : {}
 		);
 
 		res.json(words || []);
 	};
-	routerWord.get("/get", getWord);
-	routerWord.get("/get/:appId", getWord);
+	routerWord.get("/get", getWords);
+	routerWord.get("/get/:appId", getWords);
 
 	waw.word = async (slug, appId = "") => {
+		appId = appId.toLowerCase();
+
 		const word = await Word.findOne(
 			appId
 				? {
-					appId,
-					slug,
-				}
+						appId,
+						slug,
+				  }
 				: {
-					slug,
-				}
+						slug,
+				  }
 		);
 
 		if (word) {
@@ -195,12 +209,12 @@ module.exports = async (waw) => {
 		await Word.deleteOne(
 			req.body.appId
 				? {
-					appId: req.body.appId,
-					_id: req.body._id,
-				}
+						appId: req.body.appId,
+						_id: req.body._id,
+				  }
 				: {
-					_id: req.body._id,
-				}
+						_id: req.body._id,
+				  }
 		);
 
 		res.json(true);

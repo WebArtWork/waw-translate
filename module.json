@@ -1,5 +1,5 @@
 {
-	"repo": "https://github.com/WebArtWork/waw-translate.git",
+	"repo1": "https://github.com/WebArtWork/waw-translate.git",
 	"name": "Translate",
 	"dependencies": {
 		"geoip-lite": "1.4.7"
